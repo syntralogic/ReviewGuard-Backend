@@ -8,8 +8,17 @@ CREATE TABLE IF NOT EXISTS users (
   name TEXT NOT NULL,
   email TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
+  -- 'owner': a normal business owner account. 'admin': platform-wide staff
+  -- access (see routes/admin.ts). No signup flow grants 'admin' — promote
+  -- manually: UPDATE users SET role = 'admin' WHERE email = '...';
+  role TEXT NOT NULL DEFAULT 'owner' CHECK (role IN ('owner', 'admin')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Safe to re-run against a database created before the role column existed.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'owner';
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('owner', 'admin'));
 
 CREATE TABLE IF NOT EXISTS businesses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

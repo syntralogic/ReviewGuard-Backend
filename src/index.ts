@@ -8,6 +8,7 @@ import connectionRoutes from "./routes/connection";
 import dashboardRoutes from "./routes/dashboard";
 import reviewsRoutes from "./routes/reviews";
 import reportsRoutes from "./routes/reports";
+import adminRoutes from "./routes/admin";
 
 const app = express();
 const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
@@ -28,6 +29,7 @@ app.use("/api/connection", connectionRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/reviews", reviewsRoutes);
 app.use("/api/reports", reportsRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not found." });

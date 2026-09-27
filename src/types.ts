@@ -53,6 +53,40 @@ export interface AuthUser {
   email: string;
 }
 
+// --- Admin panel (platform-wide, across all businesses) ---
+// Mirrors src/types/index.ts's AdminBusinessSummary / AdminReportSummary /
+// AdminPlatformStats on the frontend.
+
+export interface AdminBusinessSummary {
+  id: string;
+  businessName: string;
+  ownerName: string;
+  ownerEmail: string;
+  connected: boolean;
+  googleAccountEmail: string | null;
+  totalReviews: number;
+  needsAttention: number;
+  reportsSubmitted: number;
+  createdAt: string;
+}
+
+export interface AdminReportSummary {
+  id: string;
+  businessName: string;
+  reviewExcerpt: string;
+  reason: PolicyRiskCategory | "other";
+  status: ReportStatus;
+  createdAt: string;
+}
+
+export interface AdminPlatformStats {
+  totalBusinesses: number;
+  connectedBusinesses: number;
+  totalReviews: number;
+  totalNeedsAttention: number;
+  totalReportsSubmitted: number;
+}
+
 // --- DB row shapes (snake_case) ---
 
 export interface ReviewRow {
