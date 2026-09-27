@@ -51,6 +51,7 @@ export interface AuthUser {
   id: string;
   name: string;
   email: string;
+  role: "owner" | "admin";
 }
 
 // --- Admin panel (platform-wide, across all businesses) ---

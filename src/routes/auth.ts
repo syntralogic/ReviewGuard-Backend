@@ -36,7 +36,7 @@ router.post("/signup", async (req, res) => {
 
     await client.query("BEGIN");
     const userResult = await client.query(
-      "INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email",
+      "INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email, role",
       [name, normalizedEmail, passwordHash],
     );
     const user = userResult.rows[0];
@@ -58,7 +58,7 @@ router.post("/signup", async (req, res) => {
     const token = signToken({ userId: user.id, businessId });
     setSessionCookie(res, token);
 
-    return res.status(201).json({ id: user.id, name: user.name, email: user.email });
+    return res.status(201).json({ id: user.id, name: user.name, email: user.email, role: user.role });
   } catch (err) {
     await client.query("ROLLBACK");
     // eslint-disable-next-line no-console
@@ -79,7 +79,7 @@ router.post("/login", async (req, res) => {
 
   try {
     const userResult = await pool.query(
-      "SELECT id, name, email, password_hash FROM users WHERE email = $1",
+      "SELECT id, name, email, password_hash, role FROM users WHERE email = $1",
       [normalizedEmail],
     );
     const user = userResult.rows[0];
@@ -99,7 +99,7 @@ router.post("/login", async (req, res) => {
     const token = signToken({ userId: user.id, businessId });
     setSessionCookie(res, token);
 
-    return res.json({ id: user.id, name: user.name, email: user.email });
+    return res.json({ id: user.id, name: user.name, email: user.email, role: user.role });
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error("Login failed:", err);
@@ -113,14 +113,14 @@ router.post("/logout", (_req, res) => {
 });
 
 router.get("/me", requireAuth, async (req, res) => {
-  const userResult = await pool.query("SELECT id, name, email FROM users WHERE id = $1", [
+  const userResult = await pool.query("SELECT id, name, email, role FROM users WHERE id = $1", [
     req.auth!.userId,
   ]);
   const user = userResult.rows[0];
   if (!user) {
     return res.status(404).json({ error: "User not found." });
   }
-  return res.json({ id: user.id, name: user.name, email: user.email });
+  return res.json({ id: user.id, name: user.name, email: user.email, role: user.role });
 });
 
 export default router;
