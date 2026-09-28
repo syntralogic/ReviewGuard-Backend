@@ -71,3 +71,13 @@ CREATE TABLE IF NOT EXISTS reports (
 );
 
 CREATE INDEX IF NOT EXISTS idx_reports_review_id ON reports(review_id);
+
+-- Supabase exposes every table in the `public` schema through its auto-generated
+-- REST API. Enabling RLS with no policies blocks that path entirely; this
+-- backend connects as the `postgres` role, which bypasses RLS, so the app is
+-- unaffected. Harmless on plain Postgres.
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE businesses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE google_connections ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reports ENABLE ROW LEVEL SECURITY;

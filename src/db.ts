@@ -1,15 +1,21 @@
 import { Pool } from "pg";
 
-// Managed Postgres providers (Render, Railway, Supabase, Heroku, etc.) require
-// SSL on external/internal connections in production. Local dev Postgres
-// typically has no SSL configured, so only enable it outside development.
-// `rejectUnauthorized: false` accepts the provider's own cert chain without
-// needing the CA bundle configured — standard practice for these hosts.
-const isProduction = process.env.NODE_ENV === "production";
+// Managed Postgres (Supabase, Render, Railway, Heroku, ...) requires SSL.
+// Local dev Postgres usually has no SSL, so it is only enabled in production.
+// Override with DATABASE_SSL=true|false if needed.
+// `rejectUnauthorized: false` accepts the provider's cert chain without the CA
+// bundle (Supabase's pooler cert fails strict verification otherwise).
+// NOTE: don't append `?sslmode=require` to DATABASE_URL - pg would then
+// enforce strict verification and override this setting.
+const sslEnv = process.env.DATABASE_SSL;
+const useSsl =
+  sslEnv !== undefined
+    ? sslEnv.toLowerCase() === "true"
+    : process.env.NODE_ENV === "production";
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: isProduction ? { rejectUnauthorized: false } : false,
+  ssl: useSsl ? { rejectUnauthorized: false } : false,
 });
 
 pool.on("error", (err) => {

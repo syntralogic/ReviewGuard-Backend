@@ -3,7 +3,7 @@
 Express + TypeScript + PostgreSQL API for the ReviewGuard frontend
 (`syntralogic/ReviewGuard-Frontend`). This replaces the frontend's mock
 `localStorage` layer (`src/lib/api.ts`, `src/lib/auth.ts`) with a real
-database and session auth — the data shapes match those files exactly.
+database and session auth. The frontend is wired to this API via `api-client.ts`.
 
 ## Stack
 
@@ -54,9 +54,37 @@ Every account gets one `business` row on signup (the app doesn't yet support
 multiple businesses per user — same single-business assumption the frontend
 mock used with its `"demo-business"` id).
 
+## Deploy: Supabase (database) + Render (backend)
+
+1. **Supabase** - create a project, then *Connect* -> *Session pooler* and copy
+   the connection string (`postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`).
+   Use the pooler, not the direct `db.<ref>.supabase.co` host: Render is
+   IPv4-only and the direct host is IPv6-only. Don't add `?sslmode=require`.
+2. **Render** - New -> Web Service -> this repo.
+   - Build Command: `npm install --include=dev && npm run build && npm run db:migrate:prod`
+   - Start Command: `npm start`
+   - The build command applies the schema on every deploy (idempotent), so no
+     Render Shell is needed. `--include=dev` is required because
+     `NODE_ENV=production` would otherwise skip TypeScript.
+3. **Environment variables** on Render:
+
+   | Key | Value |
+   |---|---|
+   | `DATABASE_URL` | Supabase session-pooler string |
+   | `JWT_SECRET` | long random string (`openssl rand -hex 32`) |
+   | `NODE_ENV` | `production` (enables SSL + cross-site cookies) |
+   | `CLIENT_ORIGIN` | exact frontend URL, no trailing slash |
+   | `JWT_EXPIRES_IN` | `7d` |
+   | `COOKIE_NAME` | `reviewguard_session` |
+
+4. Point the frontend's `VITE_API_URL` at the Render URL and redeploy it.
+
+The schema enables Row Level Security on every table so Supabase's auto-generated
+REST API can't expose them; the backend connects as `postgres`, which bypasses RLS.
+
 ## Not yet done
 
-- Frontend is not wired up yet (`src/lib/api.ts` / `src/lib/auth.ts` still
-  point at the mock localStorage layer) — intentionally left as-is per request.
-- No real Google Business Profile integration — `/api/connection/connect`
-  simulates it the same way the mock did.
+- Admin endpoints (`/api/admin/*`) exist but the frontend admin panel does not
+  call them yet.
+- No real Google Business Profile integration - `/api/connection/connect`
+  simulates it.
