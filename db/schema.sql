@@ -81,3 +81,17 @@ ALTER TABLE businesses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE google_connections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
+
+-- Real Google Business Profile integration (optional; demo mode still works
+-- when the GOOGLE_* env vars are not set).
+ALTER TABLE google_connections ADD COLUMN IF NOT EXISTS refresh_token_enc TEXT;
+ALTER TABLE google_connections ADD COLUMN IF NOT EXISTS google_account_name TEXT;
+ALTER TABLE google_connections ADD COLUMN IF NOT EXISTS google_location_name TEXT;
+ALTER TABLE google_connections ADD COLUMN IF NOT EXISTS location_title TEXT;
+ALTER TABLE google_connections ADD COLUMN IF NOT EXISTS last_synced_at TIMESTAMPTZ;
+ALTER TABLE google_connections ADD COLUMN IF NOT EXISTS sync_error TEXT;
+
+-- Google's own review id; lets syncs upsert instead of duplicating.
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS external_id TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_reviews_business_external
+  ON reviews(business_id, external_id) WHERE external_id IS NOT NULL;

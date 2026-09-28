@@ -4,7 +4,10 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 
 import authRoutes from "./routes/auth";
+import googleRoutes from "./routes/google";
 import connectionRoutes from "./routes/connection";
+import { googleConfigured } from "./lib/google";
+import { syncAllBusinesses } from "./lib/sync";
 import dashboardRoutes from "./routes/dashboard";
 import reviewsRoutes from "./routes/reviews";
 import reportsRoutes from "./routes/reports";
@@ -25,6 +28,7 @@ app.use(cookieParser());
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 app.use("/api/auth", authRoutes);
+app.use("/api/connection/google", googleRoutes);
 app.use("/api/connection", connectionRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/reviews", reviewsRoutes);
@@ -46,3 +50,9 @@ app.listen(PORT, () => {
   // eslint-disable-next-line no-console
   console.log(`ReviewGuard backend listening on http://localhost:${PORT}`);
 });
+
+// Auto-detect new Google reviews for every connected business.
+if (googleConfigured()) {
+  const minutes = Number(process.env.SYNC_INTERVAL_MINUTES ?? 15);
+  setInterval(() => void syncAllBusinesses(), Math.max(1, minutes) * 60_000);
+}

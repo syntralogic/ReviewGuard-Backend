@@ -3,6 +3,7 @@ import { z } from "zod";
 import { pool } from "../db";
 import { requireAuth } from "../middleware/auth";
 import { seedDemoReviews } from "../lib/seed";
+import { googleConfigured } from "../lib/google";
 import type { GoogleConnection } from "../types";
 
 const router = Router();
@@ -39,6 +40,9 @@ const connectSchema = z.object({
  * connected and imports a starter set of reviews the first time.
  */
 router.post("/connect", async (req, res) => {
+  if (googleConfigured()) {
+    return res.status(400).json({ error: "Please use Connect with Google to link your account." });
+  }
   const parsed = connectSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Invalid input." });
@@ -80,7 +84,9 @@ router.post("/connect", async (req, res) => {
 
 router.post("/disconnect", async (req, res) => {
   await pool.query(
-    `UPDATE google_connections SET connected = false, account_email = NULL, connected_at = NULL
+    `UPDATE google_connections SET connected = false, account_email = NULL, connected_at = NULL,
+       refresh_token_enc = NULL, google_account_name = NULL, google_location_name = NULL,
+       location_title = NULL, sync_error = NULL
      WHERE business_id = $1`,
     [req.auth!.businessId],
   );

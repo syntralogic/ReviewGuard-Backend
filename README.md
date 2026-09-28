@@ -82,9 +82,26 @@ mock used with its `"demo-business"` id).
 The schema enables Row Level Security on every table so Supabase's auto-generated
 REST API can't expose them; the backend connects as `postgres`, which bypasses RLS.
 
+## Real Google reviews (auto-detect)
+
+Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`
+(`https://<backend>/api/connection/google/callback`) and the "Connect Google"
+button switches from the demo to real OAuth. After consent the backend stores
+an encrypted refresh token, imports **all** reviews of the first location it
+finds, then keeps syncing (every `SYNC_INTERVAL_MINUTES`, plus on reviews page
+load when data is >10 min old). New reviews are keyword-scanned for policy
+risks and land in "needs attention"; your notes/status are never overwritten,
+and reported reviews that disappear from Google are marked resolved.
+
+Google Cloud setup: create a project, enable *My Business Account Management
+API*, *My Business Business Information API* and *Google My Business API*,
+create an OAuth client (Web), add the redirect URI above. The Business Profile
+API needs Google's access approval, and the `business.manage` scope needs app
+verification for public use (in "Testing" mode only listed test users work and
+refresh tokens expire after 7 days).
+
 ## Not yet done
 
 - Admin endpoints (`/api/admin/*`) exist but the frontend admin panel does not
   call them yet.
-- No real Google Business Profile integration - `/api/connection/connect`
-  simulates it.
+- Only the first location of the Google account is synced.

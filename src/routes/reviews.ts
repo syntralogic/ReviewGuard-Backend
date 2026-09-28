@@ -3,11 +3,13 @@ import { z } from "zod";
 import { pool } from "../db";
 import { requireAuth } from "../middleware/auth";
 import { reviewRowToDto, type ReviewRow } from "../types";
+import { maybeSync } from "../lib/sync";
 
 const router = Router();
 router.use(requireAuth);
 
 router.get("/", async (req, res) => {
+  maybeSync(req.auth!.businessId);
   const result = await pool.query<ReviewRow>(
     `SELECT * FROM reviews WHERE business_id = $1 AND archived = false ORDER BY created_at DESC`,
     [req.auth!.businessId],
